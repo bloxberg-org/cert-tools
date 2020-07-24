@@ -20,7 +20,8 @@ BLOCKCERTS_V3_CONTEXT = BLOCKCERTS_V3_ALPHA_CONTEXT
 def create_credential_subject_section(config):
     # An example credential subject for those that don't override
     return {
-        'id': "ecdsa-koblitz-pubkey:*|PUBKEY|*",
+        #'id': "ecdsa-koblitz-pubkey:*|PUBKEY|*",
+        'id': config.issuer_id,
         "alumniOf": {
           "id": config.issuer_url
         }
@@ -32,7 +33,7 @@ def create_v3_assertion(config):
         '@context': [
             VERIFIABLE_CREDENTIAL_V1_CONTEXT,
             BLOCKCERTS_V3_CONTEXT,
-            'https://www.w3.org/2018/credentials/examples/v1'  # example subjectCredential type if not overridden
+            #'https://www.w3.org/2018/credentials/examples/v1'  # example subjectCredential type if not overridden
         ],
         'type': ["VerifiableCredential", "BlockcertsCredential"],
         "issuer": config.issuer_id,
@@ -59,7 +60,7 @@ def create_v3_template(config):
     return assertion
 
 
-def write_certificate_template(config):
+def write_certificate_template(config, recipient_name, email):
     template_dir = config.template_dir
     if not os.path.isabs(template_dir):
         template_dir = os.path.join(config.abs_data_dir, template_dir)
@@ -75,8 +76,11 @@ def write_certificate_template(config):
 
 def get_config():
     cwd = os.getcwd()
-    config_file_path = os.path.join(cwd, 'conf.ini')
-    p = configargparse.getArgumentParser(default_config_files=[config_file_path])
+    config_file_path = os.path.join(cwd, './conf_v3.ini')
+    print(config_file_path)
+    
+
+    p = configargparse.ArgParser("create", default_config_files=[config_file_path])
 
     p.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
 

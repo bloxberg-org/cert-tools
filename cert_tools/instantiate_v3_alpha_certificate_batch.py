@@ -31,15 +31,17 @@ class Recipient:
         self.additional_fields = fields
 
 
-def instantiate_assertion(cert, uid, issued_on):
+def instantiate_assertion(cert, uid, issued_on, SHA256Hash):
     cert['issuanceDate'] = issued_on
     cert['id'] = helpers.URN_UUID_PREFIX + uid
+    cert['SHA256Hash'] = SHA256Hash
     return cert
 
 
-def instantiate_recipient(cert, recipient, additional_fields):
-    cert['credentialSubject']['id'] = recipient.pubkey
-
+def instantiate_recipient(cert, recipient_name, additional_fields):
+    #cert['credentialSubject']['id'] = recipient.pubkey
+    cert['credentialSubject']['id'] = recipient_name
+    """
     if additional_fields:
         if not recipient.additional_fields:
             raise Exception('expected additional recipient fields but none found')
@@ -50,23 +52,23 @@ def instantiate_recipient(cert, recipient, additional_fields):
             # throw an exception on this in case it's a user error. We may decide to remove this if it's a nuisance
             raise Exception(
                 'there are fields that are not expected by the additional_per_recipient_fields configuration')
+    """
 
-
-def create_unsigned_certificates_from_roster(template, recipients, use_identities, additionalFields):
+def create_unsigned_certificates_from_roster(template, recipient_name, publicKey, use_identities, additionalFields, SHA256Hash):
     issued_on = helpers.create_iso8601_tz()
 
     certs = {}
-    for recipient in recipients:
+    for shahash in SHA256Hash:
         if use_identities:
-            uid = recipient.identity
+            uid = publicKey
             uid = "".join(c for c in uid if c.isalnum())
         else:
             uid = str(uuid.uuid4())
 
         cert = copy.deepcopy(template)
 
-        instantiate_assertion(cert, uid, issued_on)
-        instantiate_recipient(cert, recipient, additionalFields)
+        instantiate_assertion(cert, uid, issued_on, shahash)
+        instantiate_recipient(cert, recipient_name, additionalFields)
 
         # validate unsigned certificate before writing
         schema_validator.validate_v3_alpha(cert, True)
@@ -90,11 +92,12 @@ def get_template(config):
         return json.loads(cert_str)
 
 
-def instantiate_batch(config):
+def instantiate_batch(config, publicKey, recipient_name, email, SHA256Hash):
     recipients = get_recipients_from_roster(config)
+    print(recipients[0])
     template = get_template(config)
     use_identities = config.filename_format == "certname_identity"
-    certs = create_unsigned_certificates_from_roster(template, recipients, use_identities, config.additional_per_recipient_fields)
+    certs = create_unsigned_certificates_from_roster(template, recipient_name, publicKey, use_identities, config.additional_per_recipient_fields, SHA256Hash)
     output_dir = os.path.join(config.abs_data_dir, config.unsigned_certificates_dir)
     print('Writing certificates to ' + output_dir)
 
@@ -110,7 +113,7 @@ def instantiate_batch(config):
 def get_config():
     cwd = os.getcwd()
 
-    p = configargparse.getArgumentParser(default_config_files=[os.path.join(cwd, 'conf.ini')])
+    p = configargparse.ArgParser("batchInstantiate", default_config_files=[os.path.join(cwd, './conf_v3.ini')])
     p.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
     p.add_argument('--data_dir', type=str, help='where data files are located')
     p.add_argument('--template_dir', type=str, help='the template output directory')
