@@ -35,10 +35,10 @@ def create_v3_assertion(config):
             BLOCKCERTS_V3_CONTEXT,
             #'https://www.w3.org/2018/credentials/examples/v1'  # example subjectCredential type if not overridden
         ],
+        'id': helpers.URN_UUID_PREFIX + '*|CERTUID|*',
         'type': ["VerifiableCredential", "BlockcertsCredential"],
         "issuer": config.issuer_id,
-        'issuanceDate': '*|DATE|*',
-        'id': helpers.URN_UUID_PREFIX + '*|CERTUID|*'
+        'issuanceDate': '*|DATE|*'
     }
     return assertion
 

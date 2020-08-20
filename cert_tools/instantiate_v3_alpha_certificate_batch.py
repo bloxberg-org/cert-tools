@@ -34,13 +34,17 @@ class Recipient:
 def instantiate_assertion(cert, uid, issued_on, SHA256Hash):
     cert['issuanceDate'] = issued_on
     cert['id'] = helpers.URN_UUID_PREFIX + uid
+    #Add back SHA is compliant with blockcerts standard
     cert['SHA256Hash'] = SHA256Hash
     return cert
 
 
-def instantiate_recipient(cert, recipient_name, additional_fields):
+def instantiate_recipient(cert, recipient_name, additional_fields, email):
     #cert['credentialSubject']['id'] = recipient.pubkey
-    cert['credentialSubject']['id'] = recipient_name
+    #cert['credentialSubject']['id'] = "did:key:z6Mkq3L1jEDDZ5R7eT523FMLxC4k6MCpzqD7ff1CrkWpoJwM"
+
+    ###Currently we are using email address as the credentialSubject's ID as we can't expect every recipient to have a public ID. Another option is recipient name 
+    cert['credentialSubject']['id'] = email
     """
     if additional_fields:
         if not recipient.additional_fields:
@@ -54,7 +58,7 @@ def instantiate_recipient(cert, recipient_name, additional_fields):
                 'there are fields that are not expected by the additional_per_recipient_fields configuration')
     """
 
-def create_unsigned_certificates_from_roster(template, recipient_name, publicKey, use_identities, additionalFields, SHA256Hash):
+def create_unsigned_certificates_from_roster(template, recipient_name, publicKey, use_identities, additionalFields, SHA256Hash, email):
     issued_on = helpers.create_iso8601_tz()
 
     certs = {}
@@ -68,7 +72,7 @@ def create_unsigned_certificates_from_roster(template, recipient_name, publicKey
         cert = copy.deepcopy(template)
 
         instantiate_assertion(cert, uid, issued_on, shahash)
-        instantiate_recipient(cert, recipient_name, additionalFields)
+        instantiate_recipient(cert, recipient_name, additionalFields, email)
 
         # validate unsigned certificate before writing
         schema_validator.validate_v3_alpha(cert, True)
@@ -97,17 +101,18 @@ def instantiate_batch(config, publicKey, recipient_name, email, SHA256Hash):
     print(recipients[0])
     template = get_template(config)
     use_identities = config.filename_format == "certname_identity"
-    certs = create_unsigned_certificates_from_roster(template, recipient_name, publicKey, use_identities, config.additional_per_recipient_fields, SHA256Hash)
+    certs = create_unsigned_certificates_from_roster(template, recipient_name, publicKey, use_identities, config.additional_per_recipient_fields, SHA256Hash, email)
     output_dir = os.path.join(config.abs_data_dir, config.unsigned_certificates_dir)
     print('Writing certificates to ' + output_dir)
-
+    uidArray = []
     for uid in certs.keys():
         cert_file = os.path.join(output_dir, uid + '.json')
         if os.path.isfile(cert_file) and config.no_clobber:
             continue
-
+        uidArray.append(uid)
         with open(cert_file, 'w') as unsigned_cert:
             json.dump(certs[uid], unsigned_cert)
+    return uidArray
 
 
 def get_config():
