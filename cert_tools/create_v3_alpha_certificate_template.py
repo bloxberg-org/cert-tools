@@ -10,11 +10,14 @@ import configargparse
 
 from cert_tools import helpers
 from cert_tools import jsonpath_helpers
+from cert_core.cert_model.model import scope_name
 
 from cert_schema import BLOCKCERTS_V3_ALPHA_CONTEXT, VERIFIABLE_CREDENTIAL_V1_CONTEXT
 
 # TODO change 'BLOCKCERTS_V3_CONTEXT' to V3 Canonical Context for final release
 BLOCKCERTS_V3_CONTEXT = BLOCKCERTS_V3_ALPHA_CONTEXT
+
+
 
 
 def create_credential_subject_section(config):
@@ -42,12 +45,47 @@ def create_v3_assertion(config):
     }
     return assertion
 
+#Badge section is not necessary in VC, but provides helpful information during verification
+def create_badge_section(config):
+    cert_image_path = os.path.join(config.abs_data_dir, config.cert_image_file)
+    issuer_image_path = os.path.join(config.abs_data_dir, config.issuer_logo_file)
+    badge = {
+        'type': 'BadgeClass',
+        'name': config.certificate_title,
+        'description': config.certificate_description,
+        'image': helpers.encode_image(cert_image_path)
+    }
+
+
+    if config.issuer_signature_lines:
+        signature_lines = []
+        signature_lines = []
+        for signature_line in config.issuer_signature_lines:
+            signature_image_path = os.path.join(config.abs_data_dir, signature_line['signature_image'])
+            signature_lines.append(
+                {
+                    'type': [
+                        'SignatureLine',
+                        'Extension'
+                    ],
+                    'jobTitle': signature_line['job_title'],
+                    'image': helpers.encode_image(signature_image_path),
+                    'name': signature_line['name']
+                }
+            )
+        badge[scope_name('signatureLines')] = signature_lines
+
+    return badge
+
 
 def create_v3_template(config):
+    #badge = create_badge_section(config)
     assertion = create_v3_assertion(config)
     credential_subject = create_credential_subject_section(config)
 
     assertion['credentialSubject'] = credential_subject
+    #assertion['badge'] = badge
+
 
     if config.additional_global_fields:
         for field in config.additional_global_fields:
@@ -83,7 +121,8 @@ def get_config():
     p = configargparse.ArgParser("create", default_config_files=[config_file_path])
 
     p.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
-
+    p.add_argument('--issuer_logo_file', type=str, help='issuer logo image file, png format')
+    p.add_argument('--cert_image_file', type=str, help='issuer logo image file, png format')
     p.add_argument('--data_dir', type=str, help='where data files are located')
     p.add_argument('--issuer_url', type=str, help='issuer URL')
     p.add_argument('--issuer_id', required=True, type=str, help='issuer profile')
@@ -93,7 +132,10 @@ def get_config():
                    help='additional global fields')
     p.add_argument('--additional_per_recipient_fields', action=helpers.make_action('per_recipient_fields'),
                    help='additional per-recipient fields')
-
+    p.add_argument('--certificate_description', type=str, help='the display description of the certificate')
+    p.add_argument('--certificate_title', required=True, type=str, help='the title of the certificate')
+    p.add_argument('--issuer_signature_lines', action=helpers.make_action('issuer_signature_lines'),
+                   help='issuer signature lines')
     args, _ = p.parse_known_args()
     args.abs_data_dir = os.path.abspath(os.path.join(cwd, args.data_dir))
     return args

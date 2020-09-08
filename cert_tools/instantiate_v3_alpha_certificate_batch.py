@@ -35,6 +35,7 @@ def instantiate_assertion(cert, uid, issued_on, SHA256Hash):
     cert['issuanceDate'] = issued_on
     cert['id'] = helpers.URN_UUID_PREFIX + uid
     #Add back SHA is compliant with blockcerts standard
+    #SHAdict = {'@SHA256Hash':SHA256Hash}
     cert['SHA256Hash'] = SHA256Hash
     return cert
 
@@ -98,7 +99,6 @@ def get_template(config):
 
 def instantiate_batch(config, publicKey, recipient_name, email, SHA256Hash):
     recipients = get_recipients_from_roster(config)
-    print(recipients[0])
     template = get_template(config)
     use_identities = config.filename_format == "certname_identity"
     certs = create_unsigned_certificates_from_roster(template, recipient_name, publicKey, use_identities, config.additional_per_recipient_fields, SHA256Hash, email)
