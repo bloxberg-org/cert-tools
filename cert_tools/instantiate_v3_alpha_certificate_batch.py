@@ -9,6 +9,7 @@ import csv
 import json
 import os
 import uuid
+import json
 
 import configargparse
 
@@ -27,25 +28,28 @@ class Recipient:
         self.name = fields.pop('name')
         self.pubkey = fields.pop('pubkey')
         self.identity = fields.pop('identity')
-
         self.additional_fields = fields
 
 
-def instantiate_assertion(cert, uid, issued_on, SHA256Hash):
+def instantiate_assertion(cert, uid, issued_on, crid):
     cert['issuanceDate'] = issued_on
-    cert['id'] = helpers.URN_UUID_PREFIX + uid
+    # ID must be a URI (AKA DID) or else it is not Verifiable Credential compliant
+    #cert['id'] = 'https://certify.bloxberg.org/' + helpers.URN_UUID_PREFIX + uid
+    cert['id'] = 'https://bloxberg.org'
     #Add back SHA is compliant with blockcerts standard
-    #SHAdict = {'@SHA256Hash':SHA256Hash}
-    cert['SHA256Hash'] = SHA256Hash
+    cert['crid'] = crid
     return cert
 
 
-def instantiate_recipient(cert, recipient_name, additional_fields, email):
-    #cert['credentialSubject']['id'] = recipient.pubkey
+def instantiate_recipient(cert, publicKey, metadataJson):
+    cert['credentialSubject']['id'] = 'https://blockexplorer.bloxberg.org/address/' + publicKey
     #cert['credentialSubject']['id'] = "did:key:z6Mkq3L1jEDDZ5R7eT523FMLxC4k6MCpzqD7ff1CrkWpoJwM"
 
     ###Currently we are using email address as the credentialSubject's ID as we can't expect every recipient to have a public ID. Another option is recipient name 
-    cert['credentialSubject']['id'] = email
+    #cert['credentialSubject']['id'] = email
+    if metadataJson is not None:
+        cert['metadataJson'] = json.dumps(metadataJson)
+
     """
     if additional_fields:
         if not recipient.additional_fields:
@@ -59,11 +63,11 @@ def instantiate_recipient(cert, recipient_name, additional_fields, email):
                 'there are fields that are not expected by the additional_per_recipient_fields configuration')
     """
 
-def create_unsigned_certificates_from_roster(template, recipient_name, publicKey, use_identities, additionalFields, SHA256Hash, email):
+def create_unsigned_certificates_from_roster(template, publicKey, use_identities, cridArray, metadataJson):
     issued_on = helpers.create_iso8601_tz()
 
     certs = {}
-    for shahash in SHA256Hash:
+    for crid in cridArray:
         if use_identities:
             uid = publicKey
             uid = "".join(c for c in uid if c.isalnum())
@@ -72,8 +76,8 @@ def create_unsigned_certificates_from_roster(template, recipient_name, publicKey
 
         cert = copy.deepcopy(template)
 
-        instantiate_assertion(cert, uid, issued_on, shahash)
-        instantiate_recipient(cert, recipient_name, additionalFields, email)
+        instantiate_assertion(cert, uid, issued_on, crid)
+        #instantiate_recipient(cert, publicKey, metadataJson)
 
         # validate unsigned certificate before writing
         schema_validator.validate_v3_alpha(cert, True)
@@ -97,11 +101,11 @@ def get_template(config):
         return json.loads(cert_str)
 
 
-def instantiate_batch(config, publicKey, recipient_name, email, SHA256Hash):
+def instantiate_batch(config, publicKey, crid, metadataJson=None):
     recipients = get_recipients_from_roster(config)
     template = get_template(config)
     use_identities = config.filename_format == "certname_identity"
-    certs = create_unsigned_certificates_from_roster(template, recipient_name, publicKey, use_identities, config.additional_per_recipient_fields, SHA256Hash, email)
+    certs = create_unsigned_certificates_from_roster(template, publicKey, use_identities, crid, metadataJson)
     output_dir = os.path.join(config.abs_data_dir, config.unsigned_certificates_dir)
     print('Writing certificates to ' + output_dir)
     uidArray = []

@@ -20,12 +20,11 @@ BLOCKCERTS_V3_CONTEXT = BLOCKCERTS_V3_ALPHA_CONTEXT
 
 
 
-def create_credential_subject_section(config):
+def create_credential_subject_section(config, publicKey):
     # An example credential subject for those that don't override
     return {
-        #'id': "ecdsa-koblitz-pubkey:*|PUBKEY|*",
-        'id': config.issuer_id,
-        "alumniOf": {
+        'id': "https://blockexplorer.bloxberg.org/address/" + publicKey,
+        "issuingOrg": {
           "id": config.issuer_url
         }
     }
@@ -38,7 +37,8 @@ def create_v3_assertion(config):
             BLOCKCERTS_V3_CONTEXT,
             #'https://www.w3.org/2018/credentials/examples/v1'  # example subjectCredential type if not overridden
         ],
-        'id': helpers.URN_UUID_PREFIX + '*|CERTUID|*',
+        #id is not required in the spec
+        #'id': helpers.URN_UUID_PREFIX + '*|CERTUID|*',
         'type': ["VerifiableCredential", "BlockcertsCredential"],
         "issuer": config.issuer_id,
         'issuanceDate': '*|DATE|*'
@@ -78,10 +78,10 @@ def create_badge_section(config):
     return badge
 
 
-def create_v3_template(config):
+def create_v3_template(config, publicKey):
     #badge = create_badge_section(config)
     assertion = create_v3_assertion(config)
-    credential_subject = create_credential_subject_section(config)
+    credential_subject = create_credential_subject_section(config, publicKey)
 
     assertion['credentialSubject'] = credential_subject
     #assertion['badge'] = badge
@@ -98,13 +98,13 @@ def create_v3_template(config):
     return assertion
 
 
-def write_certificate_template(config, recipient_name, email):
+def write_certificate_template(config, publicKey):
     template_dir = config.template_dir
     if not os.path.isabs(template_dir):
         template_dir = os.path.join(config.abs_data_dir, template_dir)
     template_file_name = config.template_file_name
 
-    assertion = create_v3_template(config)
+    assertion = create_v3_template(config, publicKey)
     template_path = os.path.join(config.abs_data_dir, template_dir, template_file_name)
 
     print('Writing template to ' + template_path)
