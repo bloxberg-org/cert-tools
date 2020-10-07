@@ -77,7 +77,7 @@ def create_unsigned_certificates_from_roster(template, publicKey, use_identities
         cert = copy.deepcopy(template)
 
         instantiate_assertion(cert, uid, issued_on, crid)
-        #instantiate_recipient(cert, publicKey, metadataJson)
+        instantiate_recipient(cert, publicKey, metadataJson)
 
         # validate unsigned certificate before writing
         schema_validator.validate_v3_alpha(cert, True)
