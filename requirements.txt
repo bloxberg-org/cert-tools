@@ -6,3 +6,4 @@ pycoin>=0.80
 tox>=3.0.0
 httpx
 aiofiles
+PyMuPDF
