@@ -38,6 +38,7 @@ def instantiate_assertion(cert, uid, issued_on, crid):
     cert['id'] = 'https://bloxberg.org'
     #Add back SHA is compliant with blockcerts standard
     cert['crid'] = crid
+    cert['cridType'] = "sha2-256"
     return cert
 
 
