@@ -31,14 +31,15 @@ class Recipient:
         self.additional_fields = fields
 
 
-def instantiate_assertion(cert, uid, issued_on, crid):
+def instantiate_assertion(cert, uid, issued_on, crid, cridType):
     cert['issuanceDate'] = issued_on
     # ID must be a URI (AKA DID) or else it is not Verifiable Credential compliant
     #cert['id'] = 'https://certify.bloxberg.org/' + helpers.URN_UUID_PREFIX + uid
     cert['id'] = 'https://bloxberg.org'
     #Add back SHA is compliant with blockcerts standard
     cert['crid'] = crid
-    cert['cridType'] = "sha2-256"
+    if cridType is not None:
+        cert['cridType'] = cridType
     return cert
 
 
@@ -64,7 +65,7 @@ def instantiate_recipient(cert, publicKey, metadataJson):
                 'there are fields that are not expected by the additional_per_recipient_fields configuration')
     """
 
-def create_unsigned_certificates_from_roster(template, publicKey, use_identities, cridArray, metadataJson):
+def create_unsigned_certificates_from_roster(template, publicKey, use_identities, cridArray, cridType, metadataJson):
     issued_on = helpers.create_iso8601_tz()
 
     certs = {}
@@ -77,7 +78,7 @@ def create_unsigned_certificates_from_roster(template, publicKey, use_identities
 
         cert = copy.deepcopy(template)
 
-        instantiate_assertion(cert, uid, issued_on, crid)
+        instantiate_assertion(cert, uid, issued_on, crid, cridType)
         instantiate_recipient(cert, publicKey, metadataJson)
 
         # validate unsigned certificate before writing
@@ -102,11 +103,11 @@ def get_template(config):
         return json.loads(cert_str)
 
 
-def instantiate_batch(config, publicKey, crid, metadataJson=None):
+def instantiate_batch(config, publicKey, crid, cridType=None, metadataJson=None):
     recipients = get_recipients_from_roster(config)
     template = get_template(config)
     use_identities = config.filename_format == "certname_identity"
-    certs = create_unsigned_certificates_from_roster(template, publicKey, use_identities, crid, metadataJson)
+    certs = create_unsigned_certificates_from_roster(template, publicKey, use_identities, crid, cridType, metadataJson)
     output_dir = os.path.join(config.abs_data_dir, config.unsigned_certificates_dir)
     print('Writing certificates to ' + output_dir)
     uidArray = []
