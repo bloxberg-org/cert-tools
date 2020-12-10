@@ -10,3 +10,4 @@ PyMuPDF
 pyqrcode
 pypng
 lds-merkle-proof-2019-bloxberg
+pytest
