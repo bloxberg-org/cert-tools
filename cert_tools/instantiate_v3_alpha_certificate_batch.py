@@ -142,7 +142,7 @@ def get_config():
 
 def main():
     conf = get_config()
-    instantiate_batch(conf)
+    instantiate_batch(conf, conf.issuer_public_key)
     print('Instantiated batch!')
 
 

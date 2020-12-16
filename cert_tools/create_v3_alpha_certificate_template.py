@@ -121,6 +121,7 @@ def get_config():
     p = configargparse.ArgParser("create", default_config_files=[config_file_path])
 
     p.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
+    p.add_argument('--issuer_public_key', type=str, help='issuer public key for bloxberg chain')
     p.add_argument('--issuer_logo_file', type=str, help='issuer logo image file, png format')
     p.add_argument('--cert_image_file', type=str, help='issuer logo image file, png format')
     p.add_argument('--data_dir', type=str, help='where data files are located')
@@ -143,7 +144,7 @@ def get_config():
 
 def main():
     conf = get_config()
-    write_certificate_template(conf)
+    write_certificate_template(conf, conf.issuer_public_key)
     print('Created template!')
 
 
