@@ -10,6 +10,8 @@ import json
 import os
 import uuid
 import json
+import hashlib
+import glob
 
 import configargparse
 
@@ -127,6 +129,8 @@ def get_config():
     p = configargparse.ArgParser("batchInstantiate", default_config_files=[os.path.join(cwd, './conf_v3.ini')])
     p.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
     p.add_argument('--data_dir', type=str, help='where data files are located')
+    p.add_argument('--issuer_public_key', type=str, help='issuer public key for bloxberg chain')
+    p.add_argument('--hashing_dir', type=str, help='directory of files you want to hash')
     p.add_argument('--template_dir', type=str, help='the template output directory')
     p.add_argument('--template_file_name', type=str, help='the template file name')
     p.add_argument('--additional_per_recipient_fields', action=helpers.make_action('per_recipient_fields'), help='additional per-recipient fields')
@@ -139,10 +143,30 @@ def get_config():
 
     return args
 
+def hashDirectory(directory):
+    print(type(directory))
+    filenames = glob.glob(directory)
+
+    cridArray = []
+
+
+    for path in os.listdir(directory):
+        full_path = os.path.join(directory, path)
+        if os.path.isfile(full_path):
+            with open(full_path, 'rb') as inputfile:
+                data = inputfile.read()
+                #blake2b algorithm - Could update to blake3
+                print(full_path, hashlib.blake2b(data).hexdigest())
+                cridArray.append(hashlib.blake2b(data).hexdigest())
+
+    return cridArray
+
 
 def main():
     conf = get_config()
-    instantiate_batch(conf, conf.issuer_public_key)
+    cridArray = hashDirectory(conf.hashing_dir)
+    cridType = 'blake2b'
+    instantiate_batch(conf, conf.issuer_public_key, cridArray, cridType)
     print('Instantiated batch!')
 
 
