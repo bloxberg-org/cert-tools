@@ -9,12 +9,12 @@ For more information on working with V3 alpha/beta, please see the docs [here](.
 
 ## Install
 
-1. Ensure you have an python environment. [Recommendations](https://github.com/blockchain-certificates/cert-issuer/blob/master/docs/virtualenv.md)
+1. Ensure you have an python environment. [Recommendations](https://github.com/bloxberg-org/cert-issuer/blob/master/docs/virtualenv.md)
 
 2. Git clone the repository and change to the directory
 
   ```bash
-  git clone https://github.com/blockchain-certificates/cert-tools.git && cd cert-tools
+  git clone https://github.com/bloxberg-org/cert-tools.git && cd cert-tools
   ```
 
 3. Run the setup script
@@ -22,28 +22,41 @@ For more information on working with V3 alpha/beta, please see the docs [here](.
   ```bash
   pip install .
   ```
+  
+  ## Example
+
+See sample_data for example configuration and output. `conf_v3` was used to create a batch of 2 unsigned certificates on the bloxberg blockchain. 
+
+The steps were:
+- Create the template
+    - Update the config file to contain the correct data to populate the certificates
+    - Run `create-certificate-template_v3 -c conf_v3.ini`, which resulted in the certificate template `/certificate_templates/test_v3.json`
+- Instantiate the batch
+    - Run 'instantiate-certificate-batch_v3 -c conf_v3.ini
+', which resulted in the files in `unsigned_certificates`
+    
+Then the unsigned certificates were copied to cert-issuer for signing and issuing on the blockchain.
 
 ## Scripts
 
 The cert-tools setup script installs 2 scripts, which are described below:
-
 
 ### create_certificate_template.py
 
 #### Run
 
 ```bash
-create-certificate-template -c conf.ini
+create-certificate-template_v3 -c conf_v3.ini
 ```
 
 #### Configuration
 
-The `conf.ini` fields are described below. Optional arguments are in brackets
+The `conf_v3.ini` fields are described below. Optional arguments are in brackets
 
 ```
 create-certificate-template --help
 
-usage: create_v2_certificate_template.py [-h] [-c MY_CONFIG]
+usage: create_v3_alpha_certificate_template.py [-h] [-c MY_CONFIG]
                                          [--data_dir DATA_DIR]
                                          [--issuer_logo_file ISSUER_LOGO_FILE]
                                          [--cert_image_file CERT_IMAGE_FILE]
@@ -120,47 +133,33 @@ Argument details:
 
 #### About
 
-Creates a certificate template populated with the setting you provide in the conf.ini file. This will not contain recipient-specific data; such fields will be populated with merge tags.
+Creates a certificate template populated with the setting you provide in the conf_v3.ini file.
  
 
-### instantiate_certificate_batch.py
+### instantiate_v3_alpha_certificate_batch.py
 
 #### Run
 
 ```
-instantiate-certificate-batch -c conf.ini
+instantiate-certificate-batch_v3 -c conf_v3.ini
 ```
-
-
-#### About
-
-Populates the certificate template (created by the previous script) with recipient data from a csv file. It generates a certificate per recipient based on the values in the csv file.
-
-The csv file location is configurable via the conf.ini file.
-
-The csv file must always contain:
-
-- name
-- pubkey
-- identity
 
 #### Configuration
 
-The `conf.ini` fields are described below. Optional arguments are in brackets
+The `conf_v3.ini` fields are described below. Optional arguments are in brackets
 
 
 ```
-instantiate-certificate-batch --help
+instantiate-certificate-batch_v3 --help
 
-usage: instantiate_v2_certificate_batch.py [-h] [-c MY_CONFIG]
+usage: instantiate_v3_alpha_certificate_batch.py [-h] [-c MY_CONFIG]
                                            [--data_dir DATA_DIR]
+                                           [--hashing_dir HASHING_DIR]
                                            [--issuer_certs_url ISSUER_CERTS_URL]
                                            [--template_dir TEMPLATE_DIR]
                                            [--template_file_name TEMPLATE_FILE_NAME]
-                                           [--hash_emails]
                                            [--additional_per_recipient_fields ADDITIONAL_PER_RECIPIENT_FIELDS]
                                            [--unsigned_certificates_dir UNSIGNED_CERTIFICATES_DIR]
-                                           [--roster ROSTER]
 
 Args that start with '--' (eg. --data_dir) can also be set in a config file (./cert-tools/conf.ini or specified via -c). Config file syntax allows: key=value, flag=true, stuff=[a,b,c] (for details, see syntax at https://goo.gl/R74nmi). If an arg is specified in more than one place, then commandline values override config file values which override defaults.
 
@@ -238,70 +237,6 @@ or, expanded for readability:
 
 ```
 
-#### Custom per-recipient fields
-
-See above note on (current) manual step of defining custom JSON-LD context.
-
-Per-recipient fields are specified in a combination of the conf.ini file, with the `additional_per_recipient_fields` entry, and the .csv file containing per-recipient data. Per-recipient fields are used in both template creation and certificate instantiaion. During the template creation process, we apply placeholder merge tags as values. This helps you preview your template before running `instantiate_certificate_batch.py`. 
-
-For each additional per-recipient field, you must indicate the following in the `additional_per_recipient_fields` config field:
-
-- the jsonpath to the field
-- the merge_tag placeholder to use
-- the csv column where the value (per recipient) can be found. This is used by instantiate_certificate_batch
-
-Example:
-
-conf.ini version:
-```
-    additional_per_recipient_fields = {"fields": [{"path": "$.xyz_custom_field","value": "*|THIS WILL CONTAIN XYZ CUSTOM VALUES|*","csv_column": "xyz_custom_field"}]}
-```
-
-above expanded for readability:
-```
-TODO
-```
-  
-   
-### create_revocation_addresses.py (currently unused)
-
-#### Run (optional)
-```
-create-revocation-addresses -k tpubD6NzV...H66KUZEBkf
-```
-
-#### About
-
-Generates Bitcoin addresses using an HD extended public (or private) key to be used as the issuer's revocation addresses for the certificates. This would be useful only if the issuer requires to be able to revoke specific certificates later on. It creates a list of addresses that could then be easily merged with the roster file, e.g. using unix's paste command.
-
-To create 20 revocation address for a testnet extended public key for the first batch of 2016 certificates run:
-
-```
-echo "revkey" > rev_addresses.txt
-
-create-revocation-addresses -n 20 -p "2016/1" -k tpubD6NzV...H66KUZEBkf >> rev_addresses.txt
-```
-
-To merge to roster (in unix) run:
-
-```
-paste -d , roster.txt rev_addresses.txt > roster_with_rev.txt
-```
-
-## Example
-
-See sample_data for example configuration and output. `conf-mainnet.ini` was used to create a batch of 2 unsigned certificates on the Bitcoin blockchain. 
-
-The steps were:
-- Create the template
-    - Update the config file to contain the correct data to populate the certificates
-    - Place the needed images in `images/` and point to them in the config file
-    - Run `create_certificate_template.py`, which resulted in the certificate template `/certificate_templates/test.json`
-- Instantiate the batch
-    - Add the recipient roster (in this case `rosters/roster_testnet.csv`) with the recipient's Bitcoin addresses.
-    - Run 'instantiate_certificate_batch.py', which resulted in the files in `unsigned_certificates`
-    
-Then the unsigned certificates were copied to cert-issuer for signing and issuing on the blockchain.
 
 ## Contact
 
