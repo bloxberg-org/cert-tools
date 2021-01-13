@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Merges a certificate template with recipients defined in a roster file. The result is
+Merges a certificate template with files from a directory. The result is
 unsigned certificates that can be given to cert-issuer.
 '''
 import copy
@@ -106,7 +106,6 @@ def get_template(config):
 
 
 def instantiate_batch(config, publicKey, crid, cridType=None, metadataJson=None):
-    recipients = get_recipients_from_roster(config)
     template = get_template(config)
     use_identities = config.filename_format == "certname_identity"
     certs = create_unsigned_certificates_from_roster(template, publicKey, use_identities, crid, cridType, metadataJson)
@@ -135,7 +134,6 @@ def get_config():
     p.add_argument('--template_file_name', type=str, help='the template file name')
     p.add_argument('--additional_per_recipient_fields', action=helpers.make_action('per_recipient_fields'), help='additional per-recipient fields')
     p.add_argument('--unsigned_certificates_dir', type=str, help='output directory for unsigned certificates')
-    p.add_argument('--roster', type=str, help='roster file name')
     p.add_argument('--filename_format', type=str, help='how to format certificate filenames (one of certname_identity or uuid)')
     p.add_argument('--no_clobber', action='store_true', help='whether to overwrite existing certificates')
     args, _ = p.parse_known_args()
@@ -148,7 +146,6 @@ def hashDirectory(directory):
     filenames = glob.glob(directory)
 
     cridArray = []
-
 
     for path in os.listdir(directory):
         full_path = os.path.join(directory, path)
