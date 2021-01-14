@@ -103,7 +103,7 @@ data/receipts/*.json
 
 lm_data/*
 lm_conf.ini
-sample_data/*
+sample_data/unsigned_certificates/*.json
 data/*
 
 .DS_Store
