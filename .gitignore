@@ -104,6 +104,10 @@ data/receipts/*.json
 lm_data/*
 lm_conf.ini
 sample_data/unsigned_certificates/*.json
+sample_data/unsigned_certificates/*.jpg
+sample_data/unsigned_certificates/*.png
+sample_data/unsigned_certificates/*.zip
+sample_data/certificates_templates/*.json
 data/*
 
 .DS_Store
