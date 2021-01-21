@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/blockchain-certificates/cert-tools.svg?branch=master)](https://travis-ci.org/blockchain-certificates/cert-tools)
 
 # cert-tools
+
 Command line tools for designing certificate templates, instantiating a certificate batch, and import/export tasks
 
 See example of certificate template and batch creation in sample_data.
@@ -13,29 +14,29 @@ For more information on working with V3 alpha/beta, please see the docs [here](.
 
 2. Git clone the repository and change to the directory
 
-  ```bash
-  git clone https://github.com/bloxberg-org/cert-tools.git && cd cert-tools
-  ```
+```bash
+git clone https://github.com/bloxberg-org/cert-tools.git && cd cert-tools
+```
 
 3. Run the setup script
 
-  ```bash
-  pip install .
-  ```
-  
-  ## Example
+```bash
+pip install .
+```
 
-See sample_data for example configuration and output. `conf_v3` was used to create a batch of 2 unsigned certificates on the bloxberg blockchain. 
+## Example
 
-The steps were:
+See sample_data for example configuration and output. `conf_v3` can be used to create a batch of 2 unsigned certificates on the bloxberg blockchain. Modify `conf_v3.ini` file accordingly for your own settings.
+
+The steps are:
+
 - Create the template
-    - Update the config file to contain the correct data to populate the certificates
-    - Run `create-certificate-template_v3 -c conf_v3.ini`, which resulted in the certificate template `/certificate_templates/test_v3.json`
+  - Update the config file to contain the correct data to populate the certificates
+  - Run `create-certificate-template_v3 -c conf_v3.ini`, which resulted in the certificate template `/certificate_templates/test_v3.json`
 - Instantiate the batch
-    - Run 'instantiate-certificate-batch_v3 -c conf_v3.ini
-', which resulted in the files in `unsigned_certificates`
-    
-Then the unsigned certificates were copied to cert-issuer for signing and issuing on the blockchain.
+  - Run `instantiate-certificate-batch_v3 -c conf_v3.ini`, which resulted in the files in `unsigned_certificates`
+
+Then the unsigned certificates were copied to [cert-issuer](https://github.com/bloxberg-org/cert-issuer) for signing and issuing on the blockchain.
 
 ## Scripts
 
@@ -134,7 +135,6 @@ Argument details:
 #### About
 
 Creates a certificate template populated with the setting you provide in the conf_v3.ini file.
- 
 
 ### instantiate_v3_alpha_certificate_batch.py
 
@@ -147,7 +147,6 @@ instantiate-certificate-batch_v3 -c conf_v3.ini
 #### Configuration
 
 The `conf_v3.ini` fields are described below. Optional arguments are in brackets
-
 
 ```
 instantiate-certificate-batch_v3 --help
@@ -190,9 +189,11 @@ Argument details:
 You can specify additional global fields (fields that apply for every certificate in the batch) and additional per-recipient fields (fields that you will specify per-recipient).
 
 #### Important: defining your custom fields in a JSON-LD context
+
 When adding either global or per-recipient custom fields, you must define each of your new terms in a [JSON-LD context](https://json-ld.org/spec/latest/json-ld/). You can either point to an existing JSON-LD context, or embed them directly in the context of the certificate. For an example of the latter, see the [JSON-LD specification section 3.1](https://json-ld.org/spec/latest/json-ld/#the-context). In this case, the `@context` value would be an array listing the existing context links, and your new definition.
 
 Examples of both options are below:
+
 ```
 {
   "@context": [
@@ -219,14 +220,16 @@ For each additional global field, you must indicate:
 Example:
 
 conf.ini:
+
 ```
 additional_global_fields = {"fields": [{"path": "$.certificate.subtitle","value": "custom subtitle"}]}
 ```
 
 or, expanded for readability:
+
 ```
     additional_global_fields = {
-        "fields": 
+        "fields":
             [
                 {
                     "path": "$.certificate.subtitle",
@@ -236,8 +239,3 @@ or, expanded for readability:
     }
 
 ```
-
-
-## Contact
-
-Contact us at [the Blockcerts community forum](http://community.blockcerts.org/).
