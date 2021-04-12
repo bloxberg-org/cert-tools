@@ -12,10 +12,11 @@ from cert_tools import helpers
 from cert_tools import jsonpath_helpers
 from cert_core.cert_model.model import scope_name
 
-from cert_schema import BLOCKCERTS_V3_ALPHA_CONTEXT, VERIFIABLE_CREDENTIAL_V1_CONTEXT
+from cert_schema import BLOCKCERTS_V3_ALPHA_CONTEXT, VERIFIABLE_CREDENTIAL_V1_CONTEXT, BLOXBERG_V1_CONTEXT
 
 # TODO change 'BLOCKCERTS_V3_CONTEXT' to V3 Canonical Context for final release
 BLOCKCERTS_V3_CONTEXT = BLOCKCERTS_V3_ALPHA_CONTEXT
+
 
 
 
@@ -34,12 +35,15 @@ def create_v3_assertion(config):
     assertion = {
         '@context': [
             VERIFIABLE_CREDENTIAL_V1_CONTEXT,
-            BLOCKCERTS_V3_CONTEXT,
+            BLOXBERG_V1_CONTEXT
+            #'https://qa.certify.bloxberg.org/research_object_certificate_v1'
+            #BLOCKCERTS_V3_CONTEXT,
             #'https://www.w3.org/2018/credentials/examples/v1'  # example subjectCredential type if not overridden
         ],
         #id is not required in the spec
         #'id': helpers.URN_UUID_PREFIX + '*|CERTUID|*',
-        'type': ["VerifiableCredential", "BlockcertsCredential"],
+        #'type': ["VerifiableCredential", "BlockcertsCredential"],
+        'type': ["VerifiableCredential", "BloxbergCredential"],
         "issuer": config.issuer_id,
         'issuanceDate': '*|DATE|*'
     }
@@ -140,6 +144,7 @@ def get_config():
     args, _ = p.parse_known_args()
     args.abs_data_dir = os.path.abspath(os.path.join(cwd, args.data_dir))
     return args
+
 
 
 def main():
